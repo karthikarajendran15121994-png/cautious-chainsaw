@@ -1,10 +1,15 @@
 from flask import Flask, render_template, request
-from urllib.parse import urlparse
 
 app = Flask(__name__)
 
+@app.route("/")
+def home():
+    return render_template("index.html")
 
-def check_url(url):
+@app.route("/check", methods=["POST"])
+def check():
+    url = request.form.get("url", "")
+
     score = 0
     reasons = []
 
@@ -12,72 +17,24 @@ def check_url(url):
         score += 1
         reasons.append("URL does not use HTTPS")
 
-    parsed = urlparse(url)
-    domain = parsed.netloc
-
-    if "@" in url:
-        score += 2
-        reasons.append("URL contains @ symbol")
-
-    parts = domain.split(".")
-
-    if len(parts) == 4 and all(part.isdigit() for part in parts):
-        score += 2
-        reasons.append("URL uses an IP address")
-
-    suspicious_words = [
-        "login", "verify", "account",
-        "password", "bank", "update",
-        "confirm", "secure"
-    ]
-
-    for word in suspicious_words:
-        if word in url.lower():
-            score += 1
-            reasons.append(f"Suspicious word found: {word}")
-
-    if len(url) > 100:
+    if len(url) > 75:
         score += 1
         reasons.append("URL is unusually long")
 
-    if score >= 4:
-        result = "PHISHING / HIGH RISK"
-        level = "danger"
-    elif score >= 2:
-        result = "SUSPICIOUS"
-        level = "warning"
+    if score >= 2:
+        risk = "SUSPICIOUS"
+    elif score == 1:
+        risk = "MEDIUM RISK"
     else:
-        result = "LOW RISK"
-        level = "safe"
-
-    return result, score, reasons, level
-
-
-@app.route("/", methods=["GET", "POST"])
-def home():
-
-    result = None
-    score = None
-    reasons = []
-    level = None
-    url = ""
-
-    if request.method == "POST":
-
-        url = request.form.get("url", "").strip()
-
-        if url:
-            result, score, reasons, level = check_url(url)
+        risk = "SAFE"
 
     return render_template(
         "index.html",
-        result=result,
+        risk=risk,
         score=score,
         reasons=reasons,
-        level=level,
         url=url
     )
 
-
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000)
