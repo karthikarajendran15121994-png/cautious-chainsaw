@@ -1,0 +1,17 @@
+<form method="POST">
+    <input type="text" name="url" placeholder="Enter URL" required>
+    <button type="submit">Check URL</button>
+</form>
+
+{% if result %}
+    <h2>Risk Level: {{ result.risk }}</h2>
+    <p>Risk Score: {{ result.score }}</p>
+
+    <h3>Reasons:</h3>
+    <ul>
+    {% for reason in result.reasons %}
+        <li>{{ reason }}</li>
+    {% endfor %}
+    </ul>
+{% endif %}
+
